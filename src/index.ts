@@ -72,11 +72,11 @@ function createScene(engine: Engine) {
   const ref5 = makeMesh(20, 10, BABYLON.Mesh.BILLBOARDMODE_NONE, undefined)
 
   const parent = BABYLON.Mesh.CreateBox('parent', 0.5, scene);
-  const m6 = makeMesh(-20, 0, BABYLON.Mesh.BILLBOARDMODE_NONE, parent)
-  const m7 = makeMesh(-10, 0, BABYLON.Mesh.BILLBOARDMODE_X, parent)
-  const m8 = makeMesh(0, 0, BABYLON.Mesh.BILLBOARDMODE_Y, parent)
-  const m9 = makeMesh(10, 0, BABYLON.Mesh.BILLBOARDMODE_Z, parent)
-  const m10 = makeMesh(20, 0, BABYLON.Mesh.BILLBOARDMODE_ALL, parent)
+  const m6 = makeMesh(-20, -10, BABYLON.Mesh.BILLBOARDMODE_NONE, parent)
+  const m7 = makeMesh(-10, -10, BABYLON.Mesh.BILLBOARDMODE_X, parent)
+  const m8 = makeMesh(0, -10, BABYLON.Mesh.BILLBOARDMODE_Y, parent)
+  const m9 = makeMesh(10, -10, BABYLON.Mesh.BILLBOARDMODE_Z, parent)
+  const m10 = makeMesh(20, -10, BABYLON.Mesh.BILLBOARDMODE_ALL, parent)
 
   let a = 0;
   scene.registerBeforeRender(function () {
@@ -92,6 +92,33 @@ function createScene(engine: Engine) {
     parent.position.z = 20 * Math.cos(a);
     a += 0.01;
   })
+
+  return scene;	
+}
+
+function createSceneSimple(engine: Engine) {
+	scene = new BABYLON.Scene(engine);
+  scene.activeCamera = new BABYLON.Camera("mapbox-Camera", new BABYLON.Vector3(), scene);
+  //scene.activeCamera = new BABYLON.ArcRotateCamera('ArcRotateCamera', 0, 0, 1000, new BABYLON.Vector3(0, 0, 0), scene);
+  scene.autoClear = false;
+  scene.detachControl();
+  
+  // from https://www.babylonjs-playground.com/#UJEIL#13
+  
+  const camera = scene.activeCamera;
+ 	const light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(1, 1, 0), scene)
+
+  const ground = BABYLON.Mesh.CreateGround('', 100, 100, 3, scene)
+  ground.position.y = groundElevation;
+
+  const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 2, segments: 32}, scene);
+  sphere.scaling.z = 1.10000123; // HACK TO MAKE THE GROUND VISIBLE
+  sphere.position.copyFromFloats(-20, groundElevation, 0)
+  sphere.position.y = 1;
+
+  const material = new BABYLON.StandardMaterial('', scene)
+  ground.material = material;
+  material.diffuseColor = BABYLON.Color3.FromInts(50, 100, 50)
 
   return scene;	
 }
@@ -145,7 +172,8 @@ export const babylonInit = async (accessToken: string, id: string | HTMLElement,
     renderingMode: '3d',
     onAdd: function(map:  mapboxgl.Map, gl: WebGL2RenderingContext) {
        engine = createEngine(gl);
-       scene = createScene(this.engine)
+       //scene = createScene(this.engine);
+       scene = createSceneSimple(this.engine);
     },
     render(gl: WebGL2RenderingContext, matrix: any) {
       if (scene) {
