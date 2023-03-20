@@ -15,6 +15,7 @@ let engine: Engine;
 let scene: Scene; 
 
 let customLayer: any;
+const groundElevation = 0.1;
 
 function createEngine(glContext: WebGL2RenderingContext) {
 	return new Engine(glContext, true);
@@ -23,28 +24,29 @@ function createEngine(glContext: WebGL2RenderingContext) {
 function createScene(engine: Engine) {
 	scene = new BABYLON.Scene(engine);
   scene.activeCamera = new BABYLON.Camera("mapbox-Camera", new BABYLON.Vector3(), scene);
+  //scene.activeCamera = new BABYLON.ArcRotateCamera('ArcRotateCamera', 0, 0, 1000, new BABYLON.Vector3(0, 0, 0), scene);
   scene.autoClear = false;
   scene.detachControl();
   
   // from https://www.babylonjs-playground.com/#UJEIL#13
   
-  var camera = scene.activeCamera;
- 	var light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(1, 1, 0), scene)
+  const camera = scene.activeCamera;
+ 	const light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(1, 1, 0), scene)
 
-  var ground = BABYLON.Mesh.CreateGround('', 100, 100, 3, scene)
-  ground.position.y = -3
+  const ground = BABYLON.Mesh.CreateGround('', 100, 100, 3, scene)
+  ground.position.y = groundElevation;
   const material = new BABYLON.StandardMaterial('', scene)
   ground.material = material;
 
   //@ts-ignore
-  window.m = material.specularColor = BABYLON.Color3.Black()
+  // window.m = material.specularColor = BABYLON.Color3.Black() // Does not seems needed.
   material.diffuseColor = BABYLON.Color3.FromInts(50, 100, 50)
 
   function makeMesh(x:number, z:number, mode:number, parent:BABYLON.Mesh|undefined) {
     // var m = BABYLON.Mesh.CreatePlane('', 5, scene)
     const m = BABYLON.Mesh.CreateBox('', 5, scene)
     m.scaling.z = 0.5
-    m.position.copyFromFloats(x, 0, z)
+    m.position.copyFromFloats(x, groundElevation, z)
     m.billboardMode = mode
     const material = new BABYLON.StandardMaterial('', scene)
     m.material = material;
@@ -94,8 +96,8 @@ function createScene(engine: Engine) {
   return scene;	
 }
 
-function getWorldMatrix() {
-  const modelOrigin = {lng: 148.9819, lat: -35.39847}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
+function getWorldMatrix(center: [number, number]) {
+  const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
   const modelAltitude = 0;
 
   const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
@@ -109,8 +111,8 @@ function getWorldMatrix() {
   return worldMatrix;
 }
 
-function render(engine:Engine, matrix:any) {
-    if(scene) {
+function render(engine:Engine, matrix:any, center: [number, number]) {
+    if (scene) {
       const projection = BABYLON.Matrix.FromArray(matrix);
       engine.wipeCaches(false);
       if (!scene.activeCamera) {
@@ -118,19 +120,18 @@ function render(engine:Engine, matrix:any) {
         return;
       }
       
-      scene.activeCamera.freezeProjectionMatrix(getWorldMatrix().multiply(projection));
+      scene.activeCamera.freezeProjectionMatrix(getWorldMatrix(center).multiply(projection));
       let invert = scene.activeCamera.getProjectionMatrix().clone().invert();
       scene.activeCamera.position = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(), invert)
       scene.render(false);
     }
   }
   
-export const babylonInit = async (id: string | HTMLElement, center: [number, number], zoom: number): Promise<Map> => {
-    mapboxgl.accessToken = 'REMOVED_MAPBOX_TOKEN';
-
+export const babylonInit = async (accessToken: string, id: string | HTMLElement, style: string, center: [number, number], zoom: number): Promise<Map> => {
+    mapboxgl.accessToken = accessToken;
     const map = new mapboxgl.Map({
         container: id,
-        style: 'mapbox://styles/mapbox/streets-v11',
+        style: style,
         zoom: zoom,
         center: center,
         pitch: 60,
@@ -142,21 +143,18 @@ export const babylonInit = async (id: string | HTMLElement, center: [number, num
     id: '3d-model',
     type: 'custom',
     renderingMode: '3d',
-    onAdd: function(map :  mapboxgl.Map, gl:WebGL2RenderingContext) {
+    onAdd: function(map:  mapboxgl.Map, gl: WebGL2RenderingContext) {
        engine = createEngine(gl);
        scene = createScene(this.engine)
     },
-    render(gl:WebGL2RenderingContext, matrix:any) {
+    render(gl: WebGL2RenderingContext, matrix: any) {
       if (scene) {
-        render(engine, matrix)
+        render(engine, matrix, center)
       }
       map.triggerRepaint();
     }
   }
 
-//   map.on('style.load', function() {
-//     map.addLayer(customLayer, 'waterway-label');
-//   });
   return new Promise(resolve => {
     map.on('style.load', () => { 
         map.addLayer(customLayer, 'waterway-label'); 
@@ -165,24 +163,14 @@ export const babylonInit = async (id: string | HTMLElement, center: [number, num
   });
 };
 
-const makeMap = (id: string | HTMLElement, center: [number, number], zoom: number): Promise<Map> => {
+const accessToken = 'REMOVED_MAPBOX_TOKEN';
+const style = 'mapbox://styles/mapbox/streets-v11';
 
-    mapboxgl.accessToken = 'REMOVED_MAPBOX_TOKEN'
-    const map = new Map({
-      container: id,
-      center,
-      zoom,
-      style: `mapbox://styles/mapbox/streets-v11`
-    })
-    return new Promise(resolve => {
-      map.on('load', () => resolve(map))
-    })
-  }
-
-// makeMap('map', [148.9819, -35.3981], 17.5).then(() => {
-//     // scene started rendering, everything is initialized
-// });
-
-babylonInit('map', [148.9819, -35.3981], 17.5).then(() => {
+const mapDiv = document.createElement('div');
+mapDiv.setAttribute('id', 'map')
+mapDiv.style.width = document.body.clientWidth.toString() + 'px';
+mapDiv.style.height = document.body.clientHeight.toString() + 'px';
+document.body.appendChild(mapDiv);
+babylonInit(accessToken, 'map', style, [148.9819, -35.3981], 17.5).then(() => {
     // scene started rendering, everything is initialized
 });
