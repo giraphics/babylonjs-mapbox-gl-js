@@ -11,6 +11,7 @@
         "strictFunctionTypes": true,
         "skipLibCheck": true,
 		"preserveConstEnums":true,
+        "allowSyntheticDefaultImports":true,
         "sourceMap": true,
         "rootDir": "./"
 	}
