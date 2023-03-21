@@ -120,7 +120,6 @@ function createSceneSimple(engine: Engine) {
   
   // from https://www.babylonjs-playground.com/#UJEIL#13
   
-  const camera = scene.activeCamera;
  	const light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(1, 1, 0), scene)
 
   const ground = BABYLON.Mesh.CreateGround('', 100, 100, 3, scene)
@@ -138,22 +137,19 @@ function createSceneSimple(engine: Engine) {
   return scene;	
 }
 
-function getWorldMatrix(center: [number, number]) {
-  const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
-  const modelAltitude = 0;
-
-  const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
+function getWorldMatrix(mercatorCoordinate: [number, number, number], scaleFactor: number) {
   const rotationMatrix = BABYLON.Matrix.RotationX(Math.PI / 2);
   // @ts-ignore
-  const translateMatrix = BABYLON.Matrix.Identity().setTranslationFromFloats(mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z);
-  const scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
+  const translateMatrix = BABYLON.Matrix.Identity().setTranslationFromFloats(mercatorCoordinate[0], mercatorCoordinate[1], mercatorCoordinate[2]);
   const scaleMatrix = BABYLON.Matrix.Scaling(scaleFactor, scaleFactor, scaleFactor);
   const worldMatrix = scaleMatrix.multiply(rotationMatrix.multiply(translateMatrix));
 
   return worldMatrix;
 }
 
-function render(engine:Engine, matrix:any, center: [number, number]) {
+function renderFromMatrix(matrix:any, mercatorCoordinate: [number, number, number], scaleFactor: number) {
+    //const engine = scene.getEngine();
+
     if (scene) {
       const projection = BABYLON.Matrix.FromArray(matrix);
       //engine.wipeCaches(false);
@@ -165,7 +161,7 @@ function render(engine:Engine, matrix:any, center: [number, number]) {
         return;
       }
       
-      scene.activeCamera.freezeProjectionMatrix(getWorldMatrix(center).multiply(projection));
+      scene.activeCamera.freezeProjectionMatrix(getWorldMatrix(mercatorCoordinate, scaleFactor).multiply(projection));
       let invert = scene.activeCamera.getProjectionMatrix().clone().invert();
       scene.activeCamera.position = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(), invert)
       scene.render(false);
@@ -190,14 +186,21 @@ export const babylonInit = async (accessToken: string, id: string | HTMLElement,
     renderingMode: '3d',
     onAdd: function(map:  mapboxgl.Map, gl: WebGL2RenderingContext) {
        engine = createEngine(gl);
-       // scene = createScene(this.engine);
-       scene = createSceneSimple(this.engine);
+       scene = createScene(this.engine);
+       //scene = createSceneSimple(this.engine);
     },
     render(gl: WebGL2RenderingContext, matrix: any) {
-      map.triggerRepaint();
       if (scene) {
-        render(engine, matrix, center)
+        const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
+        const modelAltitude = 0;
+      
+        const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
+        const scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
+  
+        renderFromMatrix(matrix, [mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z ? mercatorCoordinate.z: 0], scaleFactor)
       }
+
+      map.triggerRepaint();
     }
   }
 
