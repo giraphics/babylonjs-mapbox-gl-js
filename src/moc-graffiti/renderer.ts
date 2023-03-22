@@ -3,7 +3,8 @@ import { ENGINE_TYPE } from './constants';
 
 export class GtfRenderer {
   private _userId: number;
-  public engine?: GftEngine;
+    // @ts-ignore
+    public engine: GftEngine;
 
   constructor(userId: number) {
     this._userId = userId;
