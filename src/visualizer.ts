@@ -11,7 +11,8 @@ export default class Visualizer {
     this.renderer = new Renderer(gl);
     this.myscene = new MyScene();
 
-    this.myscene.createSceneSimple(this.renderer);
+    //this.myscene.createSceneSimple(this.renderer);
+    this.myscene.createScene(this.renderer);
   }
 
   public repaintFromMatrix (matrix:any, mercatorCoordinate: [number, number, number], scaleFactor: number) {
@@ -62,8 +63,8 @@ class MyScene {
     return this.scene;	
   }
 
-  public createScene(engine: Engine) {
-    this.scene = new BABYLON.Scene(engine);
+  public createScene(renderer: Renderer) {
+    this.scene = new BABYLON.Scene(renderer.engine);
     this.scene.activeCamera = new BABYLON.Camera("mapbox-Camera", new BABYLON.Vector3(), this.scene);
     //scene.activeCamera = new BABYLON.ArcRotateCamera('ArcRotateCamera', 0, 0, 1000, new BABYLON.Vector3(0, 0, 0), scene);
     this.scene.autoClear = false;
