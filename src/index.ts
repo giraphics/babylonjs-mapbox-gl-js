@@ -1,174 +1,10 @@
-import { Engine } from "@babylonjs/core/Engines/engine";
-import { Scene } from "@babylonjs/core/scene";
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
-import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
-import { CreateBox, CreateSphere } from "@babylonjs/core";
 import mapboxgl, { Map } from 'mapbox-gl'
-import * as BABYLON from '@babylonjs/core';
-
-/*************************************************/
-/***************** BABYLON SCENE *****************/
-/*************************************************/
-
-let engine: Engine;
-let scene: Scene; 
+import Visualizer  from "./visualizer";
 
 let customLayer: any;
-const groundElevation = 0.1;
+let visualizer: Visualizer;
 
-function createEngine(glContext: WebGL2RenderingContext) {
-	//return new Engine(glContext, true);
-  return new Engine(
-    glContext,
-    true,
-    {
-    useHighPrecisionMatrix: true // Important to prevent jitter at mercator scale
-    },
-    true
-    );
-}
-
-function createScene(engine: Engine) {
-	scene = new BABYLON.Scene(engine);
-  scene.activeCamera = new BABYLON.Camera("mapbox-Camera", new BABYLON.Vector3(), scene);
-  //scene.activeCamera = new BABYLON.ArcRotateCamera('ArcRotateCamera', 0, 0, 1000, new BABYLON.Vector3(0, 0, 0), scene);
-  scene.autoClear = false;
-  scene.autoClearDepthAndStencil = false;
-  scene.detachControl();
-  
-  // from https://www.babylonjs-playground.com/#UJEIL#13
-  
-  const camera = scene.activeCamera;
- 	const light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(1, 1, 0), scene)
-
-  const ground = BABYLON.Mesh.CreateGround('', 100, 100, 3, scene)
-  ground.position.y = groundElevation;
-  const material = new BABYLON.StandardMaterial('', scene)
-  ground.material = material;
-
-  //@ts-ignore
-  // window.m = material.specularColor = BABYLON.Color3.Black() // Does not seems needed.
-  material.diffuseColor = BABYLON.Color3.FromInts(50, 100, 50)
-
-  const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 20, segments: 32}, scene);
-  //sphere.scaling.z = 0.510000123; // HACK TO MAKE THE GROUND VISIBLE
-  sphere.position.copyFromFloats(-20, groundElevation, 0)
-  sphere.position.x = 10;
-
-  function makeMesh(x:number, z:number, mode:number, parent:BABYLON.Mesh|undefined) {
-    // var m = BABYLON.Mesh.CreatePlane('', 5, scene)
-    const m = BABYLON.Mesh.CreateBox('', 5, scene)
-    m.scaling.z = 0.5
-    m.position.copyFromFloats(x, groundElevation, z)
-    m.billboardMode = mode
-    const material = new BABYLON.StandardMaterial('', scene)
-    m.material = material;
-
-    const c = mode ? 150 : 0
-    material.diffuseColor = BABYLON.Color3.FromInts(100 + c, 100, 250 - c)
-    if (parent) {
-      m.parent = parent;
-    }
-    return m
-  }
-
-  const m1 = makeMesh(-20, 0, BABYLON.Mesh.BILLBOARDMODE_NONE, undefined)
-  const m2 = makeMesh(-10, 0, BABYLON.Mesh.BILLBOARDMODE_X, undefined)
-  const m3 = makeMesh(0, 0, BABYLON.Mesh.BILLBOARDMODE_Y, undefined)
-  const m4 = makeMesh(10, 0, BABYLON.Mesh.BILLBOARDMODE_Z, undefined)
-  const m5 = makeMesh(20, 0, BABYLON.Mesh.BILLBOARDMODE_ALL, undefined)
-
-  const ref1 = makeMesh(-20, 10, BABYLON.Mesh.BILLBOARDMODE_NONE, undefined)
-  const ref2 = makeMesh(-10, 10, BABYLON.Mesh.BILLBOARDMODE_NONE, undefined)
-  const ref3 = makeMesh(0, 10, BABYLON.Mesh.BILLBOARDMODE_NONE, undefined)
-  const ref4 = makeMesh(10, 10, BABYLON.Mesh.BILLBOARDMODE_NONE, undefined)
-  const ref5 = makeMesh(20, 10, BABYLON.Mesh.BILLBOARDMODE_NONE, undefined)
-
-  const parent = BABYLON.Mesh.CreateBox('parent', 0.5, scene);
-  const m6 = makeMesh(-20, -10, BABYLON.Mesh.BILLBOARDMODE_NONE, parent)
-  const m7 = makeMesh(-10, -10, BABYLON.Mesh.BILLBOARDMODE_X, parent)
-  const m8 = makeMesh(0, -10, BABYLON.Mesh.BILLBOARDMODE_Y, parent)
-  const m9 = makeMesh(10, -10, BABYLON.Mesh.BILLBOARDMODE_Z, parent)
-  const m10 = makeMesh(20, -10, BABYLON.Mesh.BILLBOARDMODE_ALL, parent)
-
-  let a = 0;
-  scene.registerBeforeRender(function () {
-    const diff2 = ref2.position.subtract(camera.position)
-    const diff3 = ref3.position.subtract(camera.position)
-    const diff4 = ref4.position.subtract(camera.position)
-
-    ref2.rotation.x = Math.atan2(-diff2.y, diff2.z)
-    ref3.rotation.y = Math.atan2(diff3.x, diff3.z)
-    ref4.rotation.z = Math.atan2(diff4.y, diff4.x)
-    ref5.rotationQuaternion = BABYLON.Quaternion.FromRotationMatrix(camera.getViewMatrix().clone().invert())
-
-    parent.position.z = 20 * Math.cos(a);
-    a += 0.01;
-  })
-
-  return scene;	
-}
-
-function createSceneSimple(engine: Engine) {
-	scene = new BABYLON.Scene(engine);
-  scene.activeCamera = new BABYLON.Camera("mapbox-Camera", new BABYLON.Vector3(), scene);
-  //scene.activeCamera = new BABYLON.ArcRotateCamera('ArcRotateCamera', 0, 0, 1000, new BABYLON.Vector3(0, 0, 0), scene);
-  scene.autoClear = false;
-  scene.autoClearDepthAndStencil = false;
-  scene.detachControl();
-  
-  // from https://www.babylonjs-playground.com/#UJEIL#13
-  
- 	const light = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(1, 1, 0), scene)
-
-  const ground = BABYLON.Mesh.CreateGround('', 100, 100, 3, scene)
-  ground.position.y = groundElevation;
-
-  const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter: 20, segments: 32}, scene);
-  sphere.scaling.z = 0.510000123; // HACK TO MAKE THE GROUND VISIBLE
-  sphere.position.copyFromFloats(-20, groundElevation, 0)
-  sphere.position.y = 1;
-
-  const material = new BABYLON.StandardMaterial('', scene)
-  ground.material = material;
-  material.diffuseColor = BABYLON.Color3.FromInts(50, 100, 50)
-
-  return scene;	
-}
-
-function getWorldMatrix(mercatorCoordinate: [number, number, number], scaleFactor: number) {
-  const rotationMatrix = BABYLON.Matrix.RotationX(Math.PI / 2);
-  // @ts-ignore
-  const translateMatrix = BABYLON.Matrix.Identity().setTranslationFromFloats(mercatorCoordinate[0], mercatorCoordinate[1], mercatorCoordinate[2]);
-  const scaleMatrix = BABYLON.Matrix.Scaling(scaleFactor, scaleFactor, scaleFactor);
-  const worldMatrix = scaleMatrix.multiply(rotationMatrix.multiply(translateMatrix));
-
-  return worldMatrix;
-}
-
-function renderFromMatrix(matrix:any, mercatorCoordinate: [number, number, number], scaleFactor: number) {
-    //const engine = scene.getEngine();
-
-    if (scene) {
-      const projection = BABYLON.Matrix.FromArray(matrix);
-      //engine.wipeCaches(false);
-      // scene.beforeRender = () => {
-      //   engine.wipeCaches(true);
-      // };
-      if (!scene.activeCamera) {
-        console.log('scene.activeCamera is null')
-        return;
-      }
-      
-      scene.activeCamera.freezeProjectionMatrix(getWorldMatrix(mercatorCoordinate, scaleFactor).multiply(projection));
-      let invert = scene.activeCamera.getProjectionMatrix().clone().invert();
-      scene.activeCamera.position = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(), invert)
-      scene.render(false);
-    }
-  }
-  
-export const babylonInit = async (accessToken: string, id: string | HTMLElement, style: string, center: [number, number], zoom: number): Promise<Map> => {
+export const mapBoxInit = async (accessToken: string, id: string | HTMLElement, style: string, center: [number, number], zoom: number): Promise<Map> => {
     mapboxgl.accessToken = accessToken;
     const map = new mapboxgl.Map({
         container: id,
@@ -185,21 +21,15 @@ export const babylonInit = async (accessToken: string, id: string | HTMLElement,
     type: 'custom',
     renderingMode: '3d',
     onAdd: function(map:  mapboxgl.Map, gl: WebGL2RenderingContext) {
-       engine = createEngine(gl);
-       scene = createScene(this.engine);
-       //scene = createSceneSimple(this.engine);
+       visualizer = new Visualizer(gl);
     },
     render(gl: WebGL2RenderingContext, matrix: any) {
-      if (scene) {
-        const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
-        const modelAltitude = 0;
-      
-        const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
-        const scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
-  
-        renderFromMatrix(matrix, [mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z ? mercatorCoordinate.z: 0], scaleFactor)
-      }
+      const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
+      const modelAltitude = 0;
+      const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
+      const scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
 
+      visualizer.repaintFromMatrix(matrix, [mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z ? mercatorCoordinate.z: 0], scaleFactor);
       map.triggerRepaint();
     }
   }
@@ -221,7 +51,7 @@ mapDiv.style.width = document.body.clientWidth.toString() + 'px';
 mapDiv.style.height = document.body.clientHeight.toString() + 'px';
 document.body.appendChild(mapDiv);
 
-babylonInit(accessToken, 'map', style, [103.6958, 1.3542], 17.5).then(() => {
+mapBoxInit(accessToken, 'map', style, [103.6958, 1.3542], 17.5).then(() => {
   // scene started rendering, everything is initialized
 });
 
