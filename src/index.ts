@@ -4,18 +4,13 @@ import Visualizer  from "./visualizer";
 let customLayer: any;
 let visualizer: Visualizer;
 
-export const mapBoxInit = async (accessToken: string, id: string | HTMLElement, style: string, center: [number, number], zoom: number): Promise<Map> => {
-    mapboxgl.accessToken = accessToken;
-    const map = new mapboxgl.Map({
-        container: id,
-        style: style,
-        zoom: zoom,
-        center: center,
-        pitch: 60,
-        antialias: true,
-      });
+type GraffitiOption = { useWebGL2?: boolean | undefined;}
+type MapOption = GraffitiOption & mapboxgl.MapboxOptions;
 
-      
+export const mapBoxInit = async (accessToken: string, id: string | HTMLElement, style: string, center: [number, number], zoom: number): Promise<Map> => {
+  mapboxgl.accessToken = accessToken;
+
+  const map = new mapboxgl.Map({ container: id, style: style, zoom: zoom, center: center, pitch: 60, antialias: true, useWebGL2: true} as MapOption);
   customLayer = {
     id: '3d-model',
     type: 'custom',
