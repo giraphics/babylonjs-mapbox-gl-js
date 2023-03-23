@@ -1,5 +1,6 @@
 import { GtfRenderer, GftCamera } from './moc-graffiti/exports'
 import { MyScene } from './myscene'
+import { Type }  from "./moc-graffiti/types";
 
 export default class Visualizer {
   public renderer: GtfRenderer;
@@ -20,13 +21,13 @@ export default class Visualizer {
     this.scene.autoClearDepthAndStencil = false;
     this.scene.detachControl();
 
-    this.scene.createSceneSimple(this.renderer);
-    // this.scene.createScene(this.renderer);
+    // this.scene.createSceneSimple(this.renderer);
+    this.scene.createScene(this.renderer);
   }
 
-  public repaintFromMatrix (matrix:any, mercatorCoordinate: [number, number, number], scaleFactor: number) {
+  renderloopCallbackExtCtx = (userFunction: () => Type.ContextOptions): void => {
     if (!this.scene) return;
 
-    this.scene.renderFromMatrix(matrix, mercatorCoordinate, scaleFactor)
-  }
+    this.scene.renderloopCallbackExtCtx(userFunction());
+  };
 }

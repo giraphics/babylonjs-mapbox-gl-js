@@ -1,5 +1,6 @@
 import mapboxgl, { Map } from 'mapbox-gl'
-import Visualizer  from "./visualizer";
+import Visualizer from "./visualizer";
+import { Type }  from "./moc-graffiti/types";
 
 let customLayer: any;
 let visualizer: Visualizer;
@@ -19,12 +20,24 @@ export const mapBoxInit = async (accessToken: string, id: string | HTMLElement, 
        visualizer = new Visualizer(gl);
     },
     render(gl: WebGL2RenderingContext, matrix: any) {
-      const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
-      const modelAltitude = 0;
-      const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
-      const scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
+      const callback = () : Type.ContextOptions => {
+        const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
+        const modelAltitude = 0;
+        const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
+        const scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
 
-      visualizer.repaintFromMatrix(matrix, [mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z ? mercatorCoordinate.z: 0], scaleFactor);
+        const ctxOptions: Type.ContextOptions = {
+          matrix: matrix,
+          mercatorCoordinate: [mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z as number],
+          scaleFactor: scaleFactor,
+        };
+  
+        return ctxOptions;
+      }
+
+      visualizer.renderloopCallbackExtCtx(callback);
+
+      // visualizer.repaintFromMatrix(matrix, [mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z ? mercatorCoordinate.z: 0], scaleFactor);
       map.triggerRepaint();
     }
   }

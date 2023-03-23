@@ -103,33 +103,4 @@ export class MyScene extends GftScene {
   
     return this;	
   }
-
-  public getWorldMatrix(mercatorCoordinate: [number, number, number], scaleFactor: number) {
-    const rotationMatrix = BABYLON.Matrix.RotationX(Math.PI / 2);
-    // @ts-ignore
-    const translateMatrix = BABYLON.Matrix.Identity().setTranslationFromFloats(mercatorCoordinate[0], mercatorCoordinate[1], mercatorCoordinate[2]);
-    const scaleMatrix = BABYLON.Matrix.Scaling(scaleFactor, scaleFactor, scaleFactor);
-    const worldMatrix = scaleMatrix.multiply(rotationMatrix.multiply(translateMatrix));
-  
-    return worldMatrix;
-  }
-  
-  public renderFromMatrix(matrix:any, mercatorCoordinate: [number, number, number], scaleFactor: number) {
-      //const engine = scene.getEngine();
-  
-      const projection = BABYLON.Matrix.FromArray(matrix);
-      //engine.wipeCaches(false);
-      // scene.beforeRender = () => {
-      //   engine.wipeCaches(true);
-      // };
-      if (!this.activeCamera) {
-        console.log('scene.activeCamera is null')
-        return;
-      }
-      
-      this.activeCamera.freezeProjectionMatrix(this.getWorldMatrix(mercatorCoordinate, scaleFactor).multiply(projection));
-      let invert = this.activeCamera.getProjectionMatrix().clone().invert();
-      this.activeCamera.position = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(), invert)
-      this.render(false);
-    }
 }
