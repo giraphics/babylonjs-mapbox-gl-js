@@ -25,7 +25,7 @@ export class GftScene extends BABYLON.Scene {
     return worldMatrix;
   }
 
-  public renderloopCallbackExtCtx(options: Type.ContextOptions) {  
+  public renderCallbackExtCtx(options: Type.ContextOptions) {  
     const projection = BABYLON.Matrix.FromArray(options.matrix);
 
     const supressEngineCacheCode = true;

@@ -35,7 +35,7 @@ export const mapBoxInit = async (accessToken: string, id: string | HTMLElement, 
         return ctxOptions;
       }
 
-      visualizer.renderloopCallbackExtCtx(callback);
+      visualizer.render(callback);
 
       // visualizer.repaintFromMatrix(matrix, [mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z ? mercatorCoordinate.z: 0], scaleFactor);
       map.triggerRepaint();

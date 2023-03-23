@@ -25,9 +25,9 @@ export default class Visualizer {
     this.scene.createScene(this.renderer);
   }
 
-  renderloopCallbackExtCtx = (userFunction: () => Type.ContextOptions): void => {
+  render = (userFunction: () => Type.ContextOptions): void => {
     if (!this.scene) return;
 
-    this.scene.renderloopCallbackExtCtx(userFunction());
+    this.scene.renderCallbackExtCtx(userFunction());
   };
 }
