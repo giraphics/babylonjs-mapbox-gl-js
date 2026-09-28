@@ -21,6 +21,6 @@ export class GtfRenderer {
   initEngine = async (canvas: HTMLCanvasElement | WebGL2RenderingContext, renderer: GtfRenderer, forceFallback: boolean): Promise<void> => {
     this.engine = new GftEngine(forceFallback);
     await this.engine.initialize(canvas);
-    console.log('Graffiti engine: ', this.engine.engineType == ENGINE_TYPE.WEBGPU ? 'WebGPU' : 'WebGL');
+    console.log('gfx-engine: ', this.engine.engineType == ENGINE_TYPE.WEBGPU ? 'WebGPU' : 'WebGL');
   };
 }

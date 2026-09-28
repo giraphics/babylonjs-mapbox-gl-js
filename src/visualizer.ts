@@ -1,6 +1,6 @@
-import { GtfRenderer, GftCamera } from './moc-graffiti/exports'
+import { GtfRenderer, GftCamera } from './moc-gfx-engine/exports'
 import { MyScene } from './myscene'
-import { Type }  from "./moc-graffiti/types";
+import { Type }  from "./moc-gfx-engine/types";
 
 export default class Visualizer {
   public renderer: GtfRenderer;

@@ -1,29 +1,25 @@
-import mapboxgl, { Map } from 'mapbox-gl'
+import maplibregl, { Map } from 'maplibre-gl'
 import Visualizer from "./visualizer";
-import { Type }  from "./moc-graffiti/types";
+import { Type }  from "./moc-gfx-engine/types";
 
 let customLayer: any;
 let visualizer: Visualizer;
 
-type GraffitiOption = { useWebGL2?: boolean | undefined;}
-type MapOption = GraffitiOption & mapboxgl.MapboxOptions;
-
-export const mapBoxInit = async (accessToken: string, id: string | HTMLElement, style: string, center: [number, number], zoom: number): Promise<Map> => {
-  mapboxgl.accessToken = accessToken;
-
-  const map = new mapboxgl.Map({ container: id, style: style, zoom: zoom, center: center, pitch: 60, antialias: true, useWebGL2: true} as MapOption);
+export const mapInit = async (id: string | HTMLElement, style: string, center: [number, number], zoom: number): Promise<Map> => {
+  // MapLibre v4 always uses WebGL2 when available, so no useWebGL2 flag is needed.
+  const map = new maplibregl.Map({ container: id, style: style, zoom: zoom, center: center, pitch: 60, antialias: true });
   customLayer = {
     id: '3d-model',
     type: 'custom',
     renderingMode: '3d',
-    onAdd: function(map:  mapboxgl.Map, gl: WebGL2RenderingContext) {
+    onAdd: function(map: Map, gl: WebGL2RenderingContext) {
        visualizer = new Visualizer(gl);
     },
     render(gl: WebGL2RenderingContext, matrix: any) {
       const callback = () : Type.ContextOptions => {
-        const modelOrigin = {lng: center[0], lat: center[1]}; // https://docs.mapbox.com/mapbox-gl-js/api/geography/#mercatorcoordinate.fromlnglat
+        const modelOrigin = {lng: center[0], lat: center[1]}; // https://maplibre.org/maplibre-gl-js/docs/API/classes/MercatorCoordinate/
         const modelAltitude = 0;
-        const mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
+        const mercatorCoordinate = maplibregl.MercatorCoordinate.fromLngLat(modelOrigin, modelAltitude);
         const scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
 
         const ctxOptions: Type.ContextOptions = {
@@ -44,24 +40,22 @@ export const mapBoxInit = async (accessToken: string, id: string | HTMLElement, 
 
   return new Promise(resolve => {
     map.on('style.load', () => { 
-        map.addLayer(customLayer, 'waterway-label'); 
+        map.addLayer(customLayer);
         resolve(map); 
     });
   });
 };
 
-const accessToken = 'REMOVED_MAPBOX_TOKEN';
-const style = 'mapbox://styles/mapbox/streets-v11';
+// OpenFreeMap: free vector tiles, no API key or account needed.
+const style = 'https://tiles.openfreemap.org/styles/liberty';
 
 const mapDiv = document.createElement('div');
 mapDiv.setAttribute('id', 'map')
-mapDiv.style.width = document.body.clientWidth.toString() + 'px';
-mapDiv.style.height = document.body.clientHeight.toString() + 'px';
+// Size with CSS, not a one-off pixel read: body can measure 0 at load time.
+mapDiv.style.width = '100%';
+mapDiv.style.height = '100%';
 document.body.appendChild(mapDiv);
 
-mapBoxInit(accessToken, 'map', style, [103.6958, 1.3542], 17.5).then(() => {
+mapInit('map', style, [103.6958, 1.3542], 17.5).then(() => {
   // scene started rendering, everything is initialized
 });
-
-
-

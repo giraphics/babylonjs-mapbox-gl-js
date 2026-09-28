@@ -9,9 +9,8 @@
     "@babylonjs/inspector": "5.0.0",
     "@babylonjs/loaders": "5.0.0",
     "@babylonjs/materials": "5.0.0",
-    "@types/mapbox-gl": "^2.7.10",
     "ammo.js": "github:kripken/ammo.js",
-    "mapbox-gl": "^2.13.0",
+    "maplibre-gl": "^4.7.1",
     "recast-detour": "^1.6.1"
   },
   "devDependencies": {

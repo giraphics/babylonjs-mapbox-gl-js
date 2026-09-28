@@ -1,5 +1,5 @@
 import * as BABYLON from '@babylonjs/core';
-import { GtfRenderer, GftScene } from './moc-graffiti/exports'
+import { GtfRenderer, GftScene } from './moc-gfx-engine/exports'
 
 export class MyScene extends GftScene {
   private GROUND_ELEVATION = 0.1;

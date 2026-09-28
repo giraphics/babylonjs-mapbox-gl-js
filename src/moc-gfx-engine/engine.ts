@@ -28,10 +28,16 @@ export class GftEngine {
       this._engineType = ENGINE_TYPE.WEBGL;
     }
 
+    // A WebGPUEngine cannot adopt an externally supplied WebGL2 context, so an
+    // external context always means the WebGL path. Without this, a browser
+    // that supports WebGPU falls into the branch below and returns before
+    // assigning _ref, leaving the scene with a null engine.
+    if (this._isWebGL2FeatureAvailable) {
+      this._engineType = ENGINE_TYPE.WEBGL;
+    }
+
     if (this._engineType == ENGINE_TYPE.WEBGPU) {
       console.log('WEBGPU supported!');
-      
-      if (this._isWebGL2FeatureAvailable) return;
 
       this._ref = new WebGPUEngine(canvas as HTMLCanvasElement, {
         deviceDescriptor: {
@@ -49,7 +55,7 @@ export class GftEngine {
       });
       await (this._ref as WebGPUEngine).initAsync();
     } else {
-      console.log(this._isWebGL2FeatureAvailable ? 'Graffiti: WebGL2 features avaialable!': 'Graffiti: WebGL1 features avaialable!');
+      console.log(this._isWebGL2FeatureAvailable ? 'gfx-engine: WebGL2 features avaialable!': 'gfx-engine: WebGL1 features avaialable!');
       this._ref = this._isWebGL2FeatureAvailable ? new Engine(canvas, true, { useHighPrecisionMatrix: true }, true) : new Engine(canvas, true);
     }
   };
